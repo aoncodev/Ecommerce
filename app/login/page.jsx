@@ -42,7 +42,7 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post(
-        "http://15.165.5.173:3000/api/createUser",
+        "https://albazaarkorea.com/api/createUser",
         { phone }
       );
 
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post(
-        "http://15.165.5.173:3000/api/verifyUser",
+        "https://albazaarkorea.com/api/verifyUser",
         { phone, otp: otp.join("") }
       );
 

@@ -11,7 +11,7 @@ export async function GET(request, { params }) {
       const subcategory = url.searchParams.get("subcategory");
 
       // Construct the API URL correctly
-      const apiUrl = `http://15.165.5.173:3000/api/productPage?page=${page}&limit=${limit}&category=${category}&subcategory=${subcategory}`;
+      const apiUrl = `https://albazaarkorea.com/api/productPage?page=${page}&limit=${limit}&category=${category}&subcategory=${subcategory}`;
 
       // Fetch the paginated product data
       const productResponse = await fetch(apiUrl);

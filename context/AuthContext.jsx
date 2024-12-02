@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   const getUser = async (phone) => {
     try {
       const response = await fetch(
-        `http://15.165.5.173:3000/api/getUser/${phone}`
+        `https://albazaarkorea.com/api/getUser/${phone}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch user details");
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   const fetchOrderHistory = async (userId) => {
     try {
       const response = await fetch(
-        `http://15.165.5.173:3000/api/getOrder/${userId}`
+        `https://albazaarkorea.com/api/getOrder/${userId}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = async (updatedData) => {
     try {
-      const response = await fetch(`http://15.165.5.173:3000/api/edit/user`, {
+      const response = await fetch(`https://albazaarkorea.com/api/edit/user`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedData),
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
   const fetchCart = async (phone) => {
     try {
       const response = await fetch(
-        `http://15.165.5.173:3000/api/getCart/${phone}`
+        `https://albazaarkorea.com/api/getCart/${phone}`
       );
       const data = await response.json();
       if (data && data.cart) {
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const response = await fetch(`http://15.165.5.173:3000/api/addToCart`, {
+      const response = await fetch(`https://albazaarkorea.com/api/addToCart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: user, cart: newCartItem }),
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }) => {
   const increaseCart = async (user, productId) => {
     try {
       const response = await fetch(
-        `http://15.165.5.173:3000/api/increasedCart`,
+        `https://albazaarkorea.com/api/increasedCart`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }) => {
   const decreaseCart = async (user, productId) => {
     try {
       const response = await fetch(
-        `http://15.165.5.173:3000/api/decreasedCart`,
+        `https://albazaarkorea.com/api/decreasedCart`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -165,11 +165,14 @@ export const AuthProvider = ({ children }) => {
 
   const deleteCart = async (user, productId) => {
     try {
-      const response = await fetch(`http://15.165.5.173:3000/api/deletedCart`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: user, id: productId }),
-      });
+      const response = await fetch(
+        `https://albazaarkorea.com/api/deletedCart`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: user, id: productId }),
+        }
+      );
 
       if (response.ok) {
         console.log("Product removed from cart successfully");

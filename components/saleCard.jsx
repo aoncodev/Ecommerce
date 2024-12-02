@@ -11,7 +11,7 @@ export default function SaleProductLayout() {
 
   // Fetch products on mount
   useEffect(() => {
-    fetch("http://15.165.5.173:3000/api/get/special")
+    fetch("https://albazaarkorea.com/api/get/special")
       .then((res) => res.json())
       .then((data) => {
         setSpecial(data.data);

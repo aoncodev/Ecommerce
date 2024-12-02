@@ -115,7 +115,7 @@ export default function CheckoutPage() {
 
       // Make the order
       const orderResponse = await axios.post(
-        "http://15.165.5.173:3000/api/makeOrder",
+        "https://albazaarkorea.com/api/makeOrder",
         order_body
       );
 
@@ -123,7 +123,7 @@ export default function CheckoutPage() {
 
       // Send confirmation message
       const messageResponse = await axios.post(
-        "http://15.165.5.173:3000/api/sendMessage",
+        "https://albazaarkorea.com/api/sendMessage",
         {
           phone: userDetails.phone,
           total: orderTotal,

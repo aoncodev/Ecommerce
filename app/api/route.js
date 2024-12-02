@@ -7,7 +7,7 @@ export async function GET(request) {
 
     // Fetch the category data
     const categoryResponse = await fetch(
-      "http://15.165.5.173:3000/api/subcategory"
+      "https://albazaarkorea.com/api/subcategory"
     );
     if (!categoryResponse.ok) {
       throw new Error("Failed to fetch categories");
