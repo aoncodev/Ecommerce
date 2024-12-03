@@ -58,11 +58,10 @@ export default function Navbar() {
             <div className="flex items-center justify-center">
               <Link
                 href="/"
-                className="text-2xl text-green-500"
+                className="text-xl text-green-500"
                 style={{
                   fontFamily: "var(--font-geist-bebas)",
-                  fontSize: "2rem",
-                  fontWeight: 800,
+                  fontSize: "2.5rem",
                 }}
               >
                 Albazaar

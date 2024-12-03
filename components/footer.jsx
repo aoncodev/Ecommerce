@@ -24,7 +24,7 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/albazaarkorea/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-500"
@@ -33,22 +33,13 @@ export default function Footer() {
                 <Facebook className="h-6 w-6" />
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/albazaarkorea/?hl=ko"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-500"
               >
                 <span className="sr-only">Instagram</span>
                 <Instagram className="h-6 w-6" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <span className="sr-only">Twitter</span>
-                <Twitter className="h-6 w-6" />
               </a>
             </div>
           </div>
@@ -59,26 +50,10 @@ export default function Footer() {
             <ul className="mt-4 space-y-4">
               <li>
                 <Link
-                  href="/products"
+                  href="/"
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   All Products
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/deals"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
-                  Deals
                 </Link>
               </li>
             </ul>
@@ -98,18 +73,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/contact"
+                  href="/contacts"
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/careers"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
-                  Careers
                 </Link>
               </li>
             </ul>
@@ -139,7 +106,7 @@ export default function Footer() {
           <p className="text-base text-gray-400">
             &copy; 2024 Albazaar. All rights reserved.
           </p>
-          <div className="mt-4 sm:mt-0">
+          {/* <div className="mt-4 sm:mt-0">
             <Link
               href="/privacy"
               className="text-sm text-gray-500 hover:text-gray-900 mr-4"
@@ -152,7 +119,7 @@ export default function Footer() {
             >
               Terms of Service
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
