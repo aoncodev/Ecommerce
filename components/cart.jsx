@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, X, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +21,7 @@ export default function Cart() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      fetchCart(localStorage.getItem("user")); // Fetch cart on mount if user is logged in
+      fetchCart(localStorage.getItem("user"));
     }
   }, [isLoggedIn, fetchCart]);
 
@@ -73,57 +73,66 @@ export default function Cart() {
           {cart.map((item) => (
             <div
               key={item.product_id}
-              className="flex items-center py-4 space-x-4"
+              className="flex flex-col sm:flex-row items-start sm:items-center py-4 space-y-2 sm:space-y-0"
             >
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 mr-4">
                 <Image
                   src={item.images[0]}
                   alt={item.product_name}
-                  width={80}
-                  height={80}
+                  width={60}
+                  height={60}
                   className="rounded-md"
                 />
               </div>
-              <div className="flex-grow">
-                <h3 className="font-semibold text-sm sm:text-base">
+              <div className="flex-grow w-full sm:w-auto">
+                <h3 className="font-semibold text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
                   {item.product_name}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-500">
                   {item.product_price.toLocaleString("ko-KR")}₩
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between w-full sm:w-auto sm:ml-auto space-x-2">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      decreaseCart(
+                        localStorage.getItem("user"),
+                        item.product_id
+                      )
+                    }
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-8 text-center">{item.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      increaseCart(
+                        localStorage.getItem("user"),
+                        item.product_id
+                      )
+                    }
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="ml-2 text-red-500 hover:text-red-700"
                   onClick={() =>
-                    decreaseCart(localStorage.getItem("user"), item.product_id)
+                    deleteCart(localStorage.getItem("user"), item.product_id)
                   }
                 >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-8 text-center">{item.quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() =>
-                    increaseCart(localStorage.getItem("user"), item.product_id)
-                  }
-                >
-                  <Plus className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() =>
-                  deleteCart(localStorage.getItem("user"), item.product_id)
-                }
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           ))}
           <div className="pt-4">
