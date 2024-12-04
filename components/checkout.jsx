@@ -87,7 +87,7 @@ export default function CheckoutPage() {
   const checkOut = async () => {
     try {
       const d = new Date().toLocaleString();
-      const orderTotal = parseInt(total >= 100000 ? total : total + shipping);
+      const orderTotal = total >= 100000 ? total : total + shipping; // Corrected line
 
       // Ensure the data passed is serializable
       const order_body = {
