@@ -323,11 +323,13 @@ export default function CheckoutPage() {
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="normal" id="normal" />
-                      <Label htmlFor="normal">Normal Delivery (3,000₩)</Label>
+                      <Label htmlFor="normal">Normal Delivery (3,500₩)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="island" id="island" />
-                      <Label htmlFor="island">Island Delivery (5,000₩)</Label>
+                      <Label htmlFor="island">
+                        Jeju Island Delivery (5,000₩)
+                      </Label>
                     </div>
                   </RadioGroup>
                 </div>
