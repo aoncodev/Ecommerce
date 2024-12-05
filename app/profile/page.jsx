@@ -224,13 +224,39 @@ export default function EnhancedProfilePage() {
                             className="flex justify-between py-2"
                           >
                             <span>
-                              {item.product_name} x{item.quantity}
+                              {item.product_name} x {item.quantity}
                             </span>
                             <span>
-                              {item.product_price.toLocaleString("ko-KR")}₩
+                              {item.quantity} x{" "}
+                              {item.product_price.toLocaleString("ko-KR")}₩ ={" "}
+                              {item.total.toLocaleString("ko-KR")}₩
                             </span>
                           </div>
                         ))}
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-semibold">
+                          <span>Subtotal</span>
+                          <span>
+                            {order.cart
+                              .reduce((sum, item) => sum + item.total, 0)
+                              .toLocaleString("ko-KR")}
+                            ₩
+                          </span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-semibold">
+                          <span>Shipping</span>
+                          <span>
+                            {(
+                              order.total -
+                              order.cart.reduce(
+                                (sum, item) => sum + item.total,
+                                0
+                              )
+                            ).toLocaleString("ko-KR")}
+                            ₩
+                          </span>
+                        </div>
                         <Separator className="my-2" />
                         <div className="flex justify-between font-semibold">
                           <span>Total</span>
