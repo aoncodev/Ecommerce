@@ -87,7 +87,7 @@ export default function CheckoutPage() {
   const checkOut = async () => {
     try {
       const d = new Date().toLocaleString();
-      const orderTotal = total >= 100000 ? total : total + shipping; // Corrected line
+      const orderTotal = total; // Corrected line
 
       // Ensure the data passed is serializable
       const order_body = {
@@ -154,10 +154,10 @@ export default function CheckoutPage() {
   };
 
   const handleSubmit = (e) => {
-    setClickedOrder(true);
     e.preventDefault();
     if (isFormValid) {
       console.log("Order placed:", { ...formData, deliveryOption });
+      setClickedOrder(true);
       checkOut();
     } else {
       setShowWarning(true);
@@ -166,7 +166,9 @@ export default function CheckoutPage() {
   };
 
   const subtotal = cart ? cart.reduce((sum, item) => sum + item.total, 0) : 0;
-  const shipping = deliveryOption === "island" ? 5000 : 3500;
+  const shipping =
+    subtotal >= 100000 ? 0 : deliveryOption === "island" ? 5000 : 3500; // Updated logic
+
   const total = subtotal + shipping;
 
   return (
@@ -315,24 +317,37 @@ export default function CheckoutPage() {
                   <span>Subtotal</span>
                   <span>{subtotal.toLocaleString("ko-KR")}₩</span>
                 </div>
-                <div className="space-y-2">
-                  <Label>Delivery Options</Label>
-                  <RadioGroup
-                    value={deliveryOption}
-                    onValueChange={setDeliveryOption}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="normal" id="normal" />
-                      <Label htmlFor="normal">Normal Delivery (3,500₩)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="island" id="island" />
-                      <Label htmlFor="island">
-                        Jeju Island Delivery (5,000₩)
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                {subtotal < 100000 ? (
+                  <div className="space-y-2">
+                    <Label>Delivery Options</Label>
+                    <RadioGroup
+                      value={deliveryOption}
+                      onValueChange={setDeliveryOption}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="normal" id="normal" />
+                        <Label htmlFor="normal">Normal Delivery (3,000₩)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="island" id="island" />
+                        <Label htmlFor="island">
+                          Jueju Island Delivery (5,000₩)
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Delivery Options</Label>
+                    <RadioGroup value="free">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="free" id="free" />
+                        <Label htmlFor="free">Free Delivery (0₩)</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center">
                   <span>Shipping</span>
                   <span>{shipping.toLocaleString("ko-KR")}₩</span>
