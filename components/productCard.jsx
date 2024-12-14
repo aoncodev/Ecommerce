@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import {
   Card,
@@ -45,20 +46,25 @@ export default function ProductCard({
     <Card className="w-full h-full max-w-sm bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 hover:shadow-lg flex flex-col">
       <CardHeader className="p-0">
         <div className="relative h-56 bg-gray-100">
-          <img
+          {/* Optimized Product Image */}
+          <Image
             src={product.images[0]}
             alt={product.title_en}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
           />
           {product.sale > 0 && (
             <span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-semibold">
               {product.sale}%
             </span>
           )}
-          <img
+          <Image
             src="/images/halal.png"
             alt="Halal Certification"
-            className="absolute top-2 left-2 w-10 h-10"
+            width={40}
+            height={40}
+            className="absolute top-2 left-2"
           />
         </div>
       </CardHeader>

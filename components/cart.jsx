@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
@@ -9,45 +9,46 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 
+import { redirect } from "next/navigation";
+
 export default function Cart() {
   const {
     isLoggedIn,
     cart,
+    user,
     fetchCart,
     increaseCart,
     decreaseCart,
     deleteCart,
   } = useAuth();
 
+  const [loadingCart, setLoadingCart] = useState(true);
+
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchCart(localStorage.getItem("user"));
+    if (isLoggedIn && user) {
+      fetchCart(user);
     }
-  }, [isLoggedIn, fetchCart]);
+  }, [user, isLoggedIn]);
 
   const total = cart.reduce((sum, item) => sum + item.total, 0);
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && user === "") {
     return (
-      <div className="container min-h-screen mx-auto mt-16 px-4 py-8">
-        <Card className="w-full max-w-2xl mx-auto">
-          <CardContent className="flex flex-col items-center justify-center h-64">
-            <ShoppingBag className="w-16 h-16 text-gray-400 mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-              Please log in to view your cart
-            </h2>
-            <Link href="/login">
-              <Button className="bg-primary text-white hover:bg-green-500">
-                Log In
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="bg-white p-8 rounded shadow-md text-center">
+          <h2 className="text-2xl font-bold mb-4">You are not logged in</h2>
+          <p className="text-gray-600 mb-6">
+            Please log in to access your cart.
+          </p>
+          <Link href="/login">
+            <Button className="bg-primary  text-white">Go to Login</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
-  if (cart.length === 0) {
+  if (user !== "" && cart.length === 0) {
     return (
       <div className="container min-h-screen mx-auto mt-16 px-4 py-8">
         <Card className="w-full max-w-2xl mx-auto">
@@ -67,7 +68,6 @@ export default function Cart() {
 
   return (
     <div className="container max-w-4xl mt-16 min-h-screen mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
       <Card>
         <CardContent className="divide-y">
           {cart.map((item) => (

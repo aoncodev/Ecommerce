@@ -3,6 +3,25 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 
+const shimmer = (w, h) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#333" offset="20%" />
+      <stop stop-color="#222" offset="50%" />
+      <stop stop-color="#333" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#333" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`;
+
+const toBase64 = (str) =>
+  typeof window === "undefined"
+    ? Buffer.from(str).toString("base64")
+    : window.btoa(str);
+
 export default function SaleProductLayout() {
   const [special, setSpecial] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +59,21 @@ export default function SaleProductLayout() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-xl font-semibold text-gray-700">Loading...</p>
+      <div className="container mx-auto px-4 py-4 sm:py-6">
+        <div className="grid md:grid-cols-2 gap-1">
+          {/* Placeholder for Featured Product */}
+          <div className="relative h-[300px] sm:h-[400px] md:h-[500px] shimmer-box shimmer"></div>
+
+          {/* Placeholder for 4 Sale Products */}
+          <div className="grid grid-cols-2 gap-1">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="relative h-[200px] sm:h-[250px] shimmer-box shimmer"
+              ></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -68,6 +100,11 @@ export default function SaleProductLayout() {
               layout="fill"
               objectFit="cover"
               className="absolute inset-0"
+              priority
+              placeholder="blur"
+              blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                shimmer(700, 475)
+              )}`}
             />
             <CardContent className="relative z-10 h-full flex flex-col justify-end p-3 sm:p-4 bg-gradient-to-t from-black/70 to-transparent">
               <div className="flex items-center gap-1 sm:gap-2">
@@ -107,6 +144,11 @@ export default function SaleProductLayout() {
                   layout="fill"
                   objectFit="cover"
                   className="absolute inset-0"
+                  loading="lazy"
+                  placeholder="blur"
+                  blurDataURL={`data:image/svg+xml;base64,${toBase64(
+                    shimmer(700, 475)
+                  )}`}
                 />
                 <CardContent className="relative z-10 h-full flex flex-col justify-end p-2 sm:p-3 bg-gradient-to-t from-black/70 to-transparent">
                   <div className="flex items-center gap-1 sm:gap-2">

@@ -10,6 +10,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cart, setCart] = useState([]);
+  const [user, setUser] = useState("");
   const [userDetails, setUserDetails] = useState(null);
   const [orderHistory, setOrderHistory] = useState([]); // Add order history state
 
@@ -18,13 +19,15 @@ export const AuthProvider = ({ children }) => {
     const user = localStorage.getItem("user");
     if (user) {
       setIsLoggedIn(true);
+      setUser(user);
       fetchCart(user); // Fetch cart when user logs in
     }
-  }, []);
+  }, [cart, user, isLoggedIn]);
 
   const login = (user) => {
     localStorage.setItem("user", user); // Save user in localStorage
     setIsLoggedIn(true); // Update state
+    setUser(user);
     fetchCart(user); // Fetch the cart for the logged-in user
     getUser(user);
   };
@@ -188,6 +191,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("user"); // Remove user from localStorage
     setIsLoggedIn(false); // Update state
+    setUser("");
     setCart([]); // Clear cart on logout
     setUserDetails(null);
   };
@@ -197,6 +201,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         isLoggedIn,
         cart,
+        user,
         userDetails,
         orderHistory,
         fetchOrderHistory,

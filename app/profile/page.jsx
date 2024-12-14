@@ -44,7 +44,7 @@ export default function EnhancedProfilePage() {
       setFormDetails({
         name: userDetails.name || "",
         phone: userDetails.phone || "",
-        email: userDetails.email || "",
+
         address: userDetails.addr || "",
       });
     }
@@ -61,7 +61,7 @@ export default function EnhancedProfilePage() {
         await updateUser({
           phone: formDetails.phone,
           name: formDetails.name,
-          email: formDetails.email,
+
           addr: formDetails.address,
         });
         alert("Profile updated successfully!");
@@ -153,16 +153,6 @@ export default function EnhancedProfilePage() {
                       <p className="text-sm text-muted-foreground">
                         Phone number cannot be changed
                       </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formDetails.email}
-                        onChange={handleInputChange}
-                      />
                     </div>
                   </div>
                   <div className="space-y-2">

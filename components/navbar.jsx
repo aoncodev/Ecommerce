@@ -19,11 +19,6 @@ export default function Navbar() {
 
   const { isLoggedIn, cart, logout } = useAuth(); // Use AuthContext
 
-  // Debugging cart data
-  useEffect(() => {
-    console.log("Cart in Navbar:", cart);
-  }, [cart]);
-
   // Detect device type
   useEffect(() => {
     const handleResize = () => {
