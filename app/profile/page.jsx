@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ChevronRight, Package, User, LogIn } from "lucide-react";
 import Link from "next/link";
+import DaumPostcode from "react-daum-postcode";
 
 export default function EnhancedProfilePage() {
   const {
@@ -23,17 +24,16 @@ export default function EnhancedProfilePage() {
     isLoggedIn,
   } = useAuth();
   const [formDetails, setFormDetails] = useState(null);
+  const [showAddressModal, setShowAddressModal] = useState(false);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
-      const phone = localStorage.getItem("user");
-
-      if (phone) {
-        await getUser(phone);
-        await fetchOrderHistory(phone);
+      const token = localStorage.getItem("token");
+      if (token) {
+        await getUser();
+        await fetchOrderHistory();
       }
     };
-
     if (isLoggedIn) {
       fetchUserDetails();
     }
@@ -41,11 +41,19 @@ export default function EnhancedProfilePage() {
 
   useEffect(() => {
     if (userDetails && !formDetails) {
+      // If userDetails.addr exists, try to split it into the base address and additional info.
+      let baseAddress = "";
+      let additionalAddress = "";
+      if (userDetails.addr) {
+        const parts = userDetails.addr.split(" ");
+        baseAddress = parts[0];
+        additionalAddress = parts.slice(1).join(" ");
+      }
       setFormDetails({
         name: userDetails.name || "",
         phone: userDetails.phone || "",
-
-        address: userDetails.addr || "",
+        address: baseAddress,
+        additionalAddress: additionalAddress,
       });
     }
   }, [userDetails, formDetails]);
@@ -58,11 +66,13 @@ export default function EnhancedProfilePage() {
   const handleSave = async () => {
     if (formDetails) {
       try {
+        // Combine the base address and additional address
+        const combinedAddress =
+          `${formDetails.address} ${formDetails.additionalAddress}`.trim();
         await updateUser({
           phone: formDetails.phone,
           name: formDetails.name,
-
-          addr: formDetails.address,
+          addr: combinedAddress,
         });
         alert("Profile updated successfully!");
       } catch (error) {
@@ -70,6 +80,13 @@ export default function EnhancedProfilePage() {
         alert("Failed to update profile. Please try again.");
       }
     }
+  };
+
+  // Callback when a user selects an address from DaumPostcode
+  const handleAddressSelect = (data) => {
+    console.log("Selected address:", data.address);
+    setFormDetails((prev) => ({ ...prev, address: data.address }));
+    setShowAddressModal(false);
   };
 
   if (!isLoggedIn) {
@@ -102,7 +119,7 @@ export default function EnhancedProfilePage() {
   }
 
   return (
-    <div className="min-h-screen mt-16 bg-gray-50">
+    <div className="min-h-screen mt-16 bg-white">
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">My Account</h1>
 
@@ -157,12 +174,23 @@ export default function EnhancedProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Textarea
+                    <Input
                       id="address"
                       name="address"
                       value={formDetails.address}
+                      onClick={() => setShowAddressModal(true)}
+                      readOnly
+                      placeholder="Select your address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="additionalAddress">Detailed Address</Label>
+                    <Input
+                      id="additionalAddress"
+                      name="additionalAddress"
+                      value={formDetails.additionalAddress}
                       onChange={handleInputChange}
-                      rows={3}
+                      placeholder="Enter apartment, floor, etc."
                     />
                   </div>
                   <Button type="submit" className="w-full md:w-auto">
@@ -266,6 +294,27 @@ export default function EnhancedProfilePage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Daum Postcode Modal */}
+      {showAddressModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded w-11/12 max-w-md">
+            <DaumPostcode
+              onComplete={handleAddressSelect}
+              autoClose
+              style={{ height: "400px", width: "100%" }}
+            />
+            <div className="flex justify-end mt-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowAddressModal(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

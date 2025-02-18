@@ -1,5 +1,6 @@
 "use client"; // Required for Next.js client-side components
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { useRouter } from "next/navigation"; // if you want to navigate on errors
 
 // Create a context for authentication
 const AuthContext = createContext();
@@ -7,37 +8,48 @@ const AuthContext = createContext();
 // Custom hook for easy access to AuthContext
 export const useAuth = () => useContext(AuthContext);
 
+const BASE_URL = "https://api.albazaarkorea.com/web";
+
+// Helper function to retrieve token
+const getToken = () => localStorage.getItem("token");
+
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cart, setCart] = useState([]);
-  const [user, setUser] = useState("");
   const [userDetails, setUserDetails] = useState(null);
-  const [orderHistory, setOrderHistory] = useState([]); // Add order history state
+  const [orderHistory, setOrderHistory] = useState([]);
+  const router = useRouter();
 
-  // Check login status on mount
+  // Check login status on mount (run only once)
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
+    const token = getToken();
+    if (token) {
       setIsLoggedIn(true);
-      setUser(user);
-      fetchCart(user); // Fetch cart when user logs in
+      fetchCart();
     }
-  }, [cart, user, isLoggedIn]);
+  }, []);
 
-  const login = (user) => {
-    localStorage.setItem("user", user); // Save user in localStorage
-    setIsLoggedIn(true); // Update state
-    setUser(user);
-    fetchCart(user); // Fetch the cart for the logged-in user
-    getUser(user);
+  const login = () => {
+    // Assume token is already saved in localStorage (e.g., from OTP verification)
+    setIsLoggedIn(true);
+    fetchCart();
+    getUser();
   };
 
-  const getUser = async (phone) => {
+  const getUser = async () => {
+    const token = getToken();
     try {
-      const response = await fetch(
-        `https://albazaarkorea.com/api/getUser/${phone}`
-      );
+      const response = await fetch(`${BASE_URL}/getUser`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          setIsLoggedIn(false);
+        }
         throw new Error("Failed to fetch user details");
       }
       const data = await response.json();
@@ -48,15 +60,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const fetchOrderHistory = async (userId) => {
+  const fetchOrderHistory = async () => {
+    const token = getToken();
     try {
-      const response = await fetch(
-        `https://albazaarkorea.com/api/getOrder/${userId}`
-      );
+      const response = await fetch(`${BASE_URL}/getOrder`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (response.ok) {
         const data = await response.json();
-        setOrderHistory(data); // Save order history in state
+        setOrderHistory(data);
       } else {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          setIsLoggedIn(false);
+        }
         console.error("Failed to fetch order history.");
       }
     } catch (error) {
@@ -65,55 +85,80 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = async (updatedData) => {
+    const token = getToken();
     try {
-      const response = await fetch(`https://albazaarkorea.com/api/edit/user`, {
+      const response = await fetch(`${BASE_URL}/edit/user`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(updatedData),
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          setIsLoggedIn(false);
+        }
         throw new Error("Failed to update user details");
       }
       const updatedUser = await response.json();
-      console.log(updateUser);
+      console.log("Updated user:", updatedUser);
       setUserDetails(updatedUser);
-      console.log("User profile updated successfully");
     } catch (error) {
       console.error("Error updating user profile:", error);
     }
   };
 
-  const fetchCart = async (phone) => {
+  const fetchCart = async () => {
+    const token = getToken();
     try {
-      const response = await fetch(
-        `https://albazaarkorea.com/api/getCart/${phone}`
-      );
+      const response = await fetch(`${BASE_URL}/getCart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          setIsLoggedIn(false);
+          router.push("/login");
+        }
+        throw new Error("Failed to fetch cart data");
+      }
       const data = await response.json();
-      if (data && data.cart) {
-        setCart(data.cart); // Update cart state with fetched data
+      console.log("Cart data:", data);
+      // Assuming the returned data structure is { cart: { cart: [...] } }
+      if (data && data.cart && data.cart.cart) {
+        setCart(data.cart.cart);
       }
     } catch (error) {
       console.error("Error fetching cart data:", error);
-      setCart([]); // Reset cart on error
+      setCart([]);
     }
   };
 
-  const addToCart = async (user, newCartItem) => {
+  const addToCart = async (newCartItem) => {
+    const token = getToken();
     try {
-      if (!user) {
-        console.error("User is not logged in");
+      const response = await fetch(`${BASE_URL}/addToCart`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cart: newCartItem }),
+      });
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        setIsLoggedIn(false);
+        router.push("/login");
         return;
       }
-
-      const response = await fetch(`https://albazaarkorea.com/api/addToCart`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: user, cart: newCartItem }),
-      });
-
       if (response.ok) {
         console.log("Product added to cart successfully");
-        fetchCart(user); // Re-fetch the cart to ensure state is updated
+        fetchCart();
       } else {
         console.error("Failed to add product to cart");
       }
@@ -122,20 +167,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const increaseCart = async (user, productId) => {
+  const increaseCart = async (productId) => {
+    const token = getToken();
     try {
-      const response = await fetch(
-        `https://albazaarkorea.com/api/increasedCart`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: user, id: productId }),
-        }
-      );
-
+      const response = await fetch(`${BASE_URL}/increasedCart`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: productId }),
+      });
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        setIsLoggedIn(false);
+        router.push("/login");
+        return;
+      }
       if (response.ok) {
         console.log("Product quantity increased successfully");
-        fetchCart(user); // Re-fetch the cart to update state
+        fetchCart();
       } else {
         console.error("Failed to increase product quantity");
       }
@@ -144,20 +195,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const decreaseCart = async (user, productId) => {
+  const decreaseCart = async (productId) => {
+    const token = getToken();
     try {
-      const response = await fetch(
-        `https://albazaarkorea.com/api/decreasedCart`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: user, id: productId }),
-        }
-      );
-
+      const response = await fetch(`${BASE_URL}/decreasedCart`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: productId }),
+      });
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        setIsLoggedIn(false);
+        router.push("/login");
+        return;
+      }
       if (response.ok) {
         console.log("Product quantity decreased successfully");
-        fetchCart(user); // Re-fetch the cart to update state
+        fetchCart();
       } else {
         console.error("Failed to decrease product quantity");
       }
@@ -166,20 +223,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const deleteCart = async (user, productId) => {
+  const deleteCart = async (productId) => {
+    const token = getToken();
     try {
-      const response = await fetch(
-        `https://albazaarkorea.com/api/deletedCart`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: user, id: productId }),
-        }
-      );
-
+      const response = await fetch(`${BASE_URL}/deletedCart`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: productId }),
+      });
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        setIsLoggedIn(false);
+        router.push("/login");
+        return;
+      }
       if (response.ok) {
         console.log("Product removed from cart successfully");
-        fetchCart(user); // Re-fetch the cart to update state
+        fetchCart();
       } else {
         console.error("Failed to delete product from cart");
       }
@@ -189,10 +252,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("user"); // Remove user from localStorage
-    setIsLoggedIn(false); // Update state
-    setUser("");
-    setCart([]); // Clear cart on logout
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setCart([]);
     setUserDetails(null);
   };
 
@@ -201,7 +263,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         isLoggedIn,
         cart,
-        user,
         userDetails,
         orderHistory,
         fetchOrderHistory,
@@ -220,3 +281,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

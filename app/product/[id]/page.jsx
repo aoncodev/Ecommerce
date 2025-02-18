@@ -4,7 +4,9 @@ import ProductDetail from "@/components/productDetail";
 
 export async function generateMetadata({ searchParams }) {
   const { productId } = await searchParams; // Accessing the query parameter
-  const res = await fetch(`https://albazaarkorea.com/api/product/${productId}`);
+  const res = await fetch(
+    `https://api.albazaarkorea.com/api/product/${productId}`
+  );
   const product = await res.json();
 
   return {
@@ -15,7 +17,9 @@ export async function generateMetadata({ searchParams }) {
 
 export default async function ProductPage({ searchParams }) {
   const { productId } = await searchParams; // Accessing the query parameter
-  const res = await fetch(`https://albazaarkorea.com/api/product/${productId}`);
+  const res = await fetch(
+    `https://api.albazaarkorea.com/api/product/${productId}`
+  );
   const product = await res.json();
 
   return (

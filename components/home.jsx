@@ -1,36 +1,64 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ProductCard from "@/components/productCard";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import SaleProductLayout from "@/components/saleCard";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function ProductPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [showScrollTop, setShowScrollTop] = useState(false); // State for showing the button
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [popup, setPopup] = useState(null); // State for pop-up data
-  const [showPopup, setShowPopup] = useState(false); // Control pop-up visibility
+  const [popup, setPopup] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); // full text from input
+  const [backendSearch, setBackendSearch] = useState(""); // text sent to backend
+
+  // Ref to store previous search value
+  const prevSearchRef = useRef("");
+
+  // Update backendSearch only when searchQuery is empty OR when it increases in length.
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      // When cleared, reset backend search so that default products are fetched.
+      setBackendSearch("");
+      setPage(1);
+    } else if (searchQuery.length > prevSearchRef.current.length) {
+      setBackendSearch(searchQuery);
+      setPage(1);
+    }
+    // Always update previous search value
+    prevSearchRef.current = searchQuery;
+  }, [searchQuery]);
 
   // Fetch pop-up data
   useEffect(() => {
     const fetchPopup = async () => {
+      const token = localStorage.getItem("token");
       try {
-        const response = await fetch("https://albazaarkorea.com/api/popup");
+        const response = await fetch(
+          "https://api.albazaarkorea.com/web/popup",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
         const data = await response.json();
-
-        // Check localStorage to determine whether to show the pop-up
-        const today = new Date().toISOString().split("T")[0]; // Get today's date
+        const today = new Date().toISOString().split("T")[0];
         const hidePopupDate = localStorage.getItem("hidePopupDate");
-
         if (data.show && hidePopupDate !== today) {
           setPopup(data);
           setShowPopup(true);
@@ -39,100 +67,117 @@ export default function ProductPage() {
         setShowPopup(false);
       }
     };
-
     fetchPopup();
   }, []);
 
-  const handleClosePopup = () => {
-    setShowPopup(false);
-  };
-
+  const handleClosePopup = () => setShowPopup(false);
   const handleDontShowToday = () => {
-    const today = new Date().toISOString().split("T")[0]; // Get today's date
-    localStorage.setItem("hidePopupDate", today); // Store the "Don't Show Again Today" preference
+    const today = new Date().toISOString().split("T")[0];
+    localStorage.setItem("hidePopupDate", today);
     setShowPopup(false);
   };
 
   // Fetch categories data
   useEffect(() => {
     const fetchCategories = async () => {
+      const token = localStorage.getItem("token");
       try {
-        const response = await fetch(`/api`);
+        const response = await fetch(
+          "https://api.albazaarkorea.com/web/subcategory",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
         const data = await response.json();
-        setCategories(data.categories);
+        setCategories(data.categories || data);
         setLoadingCategories(false);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // Fetch products whenever page, category, or subcategory changes
+  // Fetch products using backendSearch (only updated when search text increases)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        const token = localStorage.getItem("token");
+        const searchParam = backendSearch
+          ? `&search=${encodeURIComponent(backendSearch)}`
+          : "";
         const response = await fetch(
-          `/api/products?page=${page}&limit=20&category=${
-            selectedCategory != null ? selectedCategory : ""
+          `https://api.albazaarkorea.com/web/productPage?page=${page}&limit=20&category=${
+            selectedCategory ? selectedCategory : ""
           }&subcategory=${
-            selectedSubcategory != null ? selectedSubcategory : ""
-          }`
+            selectedSubcategory ? selectedSubcategory : ""
+          }${searchParam}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
         const data = await response.json();
-
         if (page === 1) {
-          setProducts(data.products.products); // Replace products when the page is reset
+          setProducts(data.products);
           setLoadingProducts(false);
         } else {
-          setProducts((prevProducts) => [
-            ...prevProducts,
-            ...data.products.products,
-          ]);
+          setProducts((prev) => [...prev, ...data.products]);
         }
-
-        if (data.products.products.length < 20) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        setHasMore(data.pagination.totalProducts > page * 20);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
-
     fetchProducts();
-  }, [selectedCategory, selectedSubcategory, page]);
+  }, [selectedCategory, selectedSubcategory, page, backendSearch]);
 
-  // Detect device type
+  // Local filtering: update filteredProducts based on the full searchQuery
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredProducts(products);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = products.filter(
+        (p) =>
+          (p.title_en && p.title_en.toLowerCase().includes(query)) ||
+          (p.title_ru && p.title_ru.toLowerCase().includes(query)) ||
+          (p.title_uz && p.title_uz.toLowerCase().includes(query)) ||
+          (p.title_ko && p.title_ko.toLowerCase().includes(query)) ||
+          (p.brand && p.brand.toLowerCase().includes(query))
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
+
+  // Device detection
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.matchMedia("(max-width: 768px)").matches);
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Show "Scroll to Top" button when scrolling down
+  // Scroll-to-top visibility
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      setShowScrollTop(window.scrollY > 300);
     };
-
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToTop = () => {
@@ -153,9 +198,7 @@ export default function ProductPage() {
   };
 
   const loadMoreProducts = () => {
-    if (hasMore) {
-      setPage((prevPage) => prevPage + 1);
-    }
+    if (hasMore) setPage((prev) => prev + 1);
   };
 
   return (
@@ -164,7 +207,6 @@ export default function ProductPage() {
       {showPopup && popup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-4xl">
-            {/* Larger Image */}
             <Image
               src={popup.image}
               alt="Notification"
@@ -172,7 +214,6 @@ export default function ProductPage() {
               height={600}
               className="rounded-lg w-full h-auto"
             />
-            {/* Buttons */}
             <div className="mt-6 flex justify-end space-x-4">
               <button
                 onClick={handleClosePopup}
@@ -201,11 +242,45 @@ export default function ProductPage() {
         <SaleProductLayout />
       </motion.div>
 
+      {/* Search Bar */}
+      <div className="flex flex-col items-center mb-8 mt-12">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+          Discover Your Next Favorite Find
+        </h2>
+        <div className="relative w-full max-w-md">
+          <Input
+            placeholder="Type keywords, brand, or product name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <button
+            className="absolute inset-y-0 right-0 flex items-center px-3 bg-green-500 text-white rounded-r-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+            onClick={() => {}}
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-4.35-4.35M17 10.5A6.5 6.5 0 1 0 4 10.5a6.5 6.5 0 0 0 13 0z"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
       {/* Category List */}
-      <div className="flex-col md:flex-row gap-6 mt-12 mb-10">
+      <div className="flex flex-col items-center gap-6 mt-12 mb-8">
         {!isMobile && !loadingCategories && (
           <motion.div
-            className="flex items-center justify-center mb-6 font-bold text-lg"
+            className="flex items-center justify-center mb-2 font-bold text-lg"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -213,8 +288,7 @@ export default function ProductPage() {
             <h1>Categories</h1>
           </motion.div>
         )}
-
-        <div className="flex overflow-x-auto space-x-6 p-2">
+        <div className="flex overflow-x-auto space-x-6 p-2 w-full justify-start md:justify-center">
           {loadingCategories
             ? Array.from({ length: 8 }).map((_, index) => (
                 <div
@@ -229,7 +303,7 @@ export default function ProductPage() {
             : categories.map((category) => (
                 <div
                   key={category._id}
-                  className={`flex flex-col items-center text-center cursor-pointer`}
+                  className="flex flex-col items-center text-center cursor-pointer"
                   onClick={() => handleCategoryChange(category._id)}
                 >
                   <div
@@ -252,7 +326,7 @@ export default function ProductPage() {
 
       {/* Subcategory List */}
       {selectedCategory && (
-        <div className="flex flex-wrap gap-4 mt-6 mb-8">
+        <div className="flex flex-wrap gap-4 mt-6 mb-14 justify-start md:justify-center">
           {loadingCategories
             ? Array.from({ length: 6 }).map((_, index) => (
                 <div
@@ -296,24 +370,19 @@ export default function ProductPage() {
                 key={index}
                 className="w-full h-full max-w-sm bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 flex flex-col"
               >
-                {/* Image Placeholder */}
                 <div className="relative h-56 bg-gray-100 shimmer-box shimmer"></div>
-
-                {/* Content Placeholder */}
                 <div className="p-4 flex flex-col flex-grow">
                   <div className="flex items-center space-x-2">
                     <div className="w-1/2 h-6 bg-gray-300 shimmer-box shimmer rounded"></div>
                   </div>
                   <div className="mt-4 w-3/4 h-5 bg-gray-300 shimmer-box shimmer rounded"></div>
                 </div>
-
-                {/* Footer Placeholder */}
                 <div className="p-2">
                   <div className="w-full h-10 bg-gray-300 shimmer-box shimmer rounded-lg"></div>
                 </div>
               </div>
             ))
-          : products.map((product) => (
+          : filteredProducts.map((product) => (
               <Link
                 key={product._id}
                 href={{
@@ -326,7 +395,7 @@ export default function ProductPage() {
             ))}
       </div>
 
-      {products.length === 0 && !loadingProducts && (
+      {filteredProducts.length === 0 && !loadingProducts && (
         <p className="text-center text-gray-500 mt-8">
           No products found. Try adjusting your filters or search query.
         </p>
@@ -335,16 +404,16 @@ export default function ProductPage() {
       {/* Load More Button */}
       {hasMore && !loadingProducts && (
         <div className="text-center mt-12">
-          <button
+          <Button
             onClick={loadMoreProducts}
             className="bg-transparent border border-green-500 text-black hover:text-white py-3 px-10 rounded-lg hover:bg-green-500"
           >
             Load More
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* Floating Button */}
+      {/* Floating Scroll to Top Button */}
       {showScrollTop && !isMobile && (
         <button
           onClick={scrollToTop}

@@ -37,7 +37,7 @@ export default function ProductDetail({ product }) {
       return;
     }
 
-    addToCart(localStorage.getItem("user"), {
+    addToCart({
       images: product.images,
       product_id: product._id,
       product_name: product.title_en,

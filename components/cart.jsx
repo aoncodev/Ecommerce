@@ -15,7 +15,6 @@ export default function Cart() {
   const {
     isLoggedIn,
     cart,
-    user,
     fetchCart,
     increaseCart,
     decreaseCart,
@@ -25,14 +24,14 @@ export default function Cart() {
   const [loadingCart, setLoadingCart] = useState(true);
 
   useEffect(() => {
-    if (isLoggedIn && user) {
-      fetchCart(user);
+    if (isLoggedIn) {
+      fetchCart();
     }
-  }, [user, isLoggedIn]);
+  }, [isLoggedIn]);
 
   const total = cart.reduce((sum, item) => sum + item.total, 0);
 
-  if (!isLoggedIn && user === "") {
+  if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <div className="bg-white p-8 rounded shadow-md text-center">
@@ -48,7 +47,7 @@ export default function Cart() {
     );
   }
 
-  if (user !== "" && cart.length === 0) {
+  if (cart.length === 0) {
     return (
       <div className="container min-h-screen mx-auto mt-16 px-4 py-8">
         <Card className="w-full max-w-2xl mx-auto">
@@ -98,12 +97,7 @@ export default function Cart() {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() =>
-                      decreaseCart(
-                        localStorage.getItem("user"),
-                        item.product_id
-                      )
-                    }
+                    onClick={() => decreaseCart(item.product_id)}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -112,12 +106,7 @@ export default function Cart() {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() =>
-                      increaseCart(
-                        localStorage.getItem("user"),
-                        item.product_id
-                      )
-                    }
+                    onClick={() => increaseCart(item.product_id)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -126,9 +115,7 @@ export default function Cart() {
                   variant="ghost"
                   size="icon"
                   className="ml-2 text-red-500 hover:text-red-700"
-                  onClick={() =>
-                    deleteCart(localStorage.getItem("user"), item.product_id)
-                  }
+                  onClick={() => deleteCart(item.product_id)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

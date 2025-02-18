@@ -40,20 +40,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const fetchUserDetails = async () => {
-      const phone = localStorage.getItem("user");
-      if (phone) {
-        await getUser(phone);
-      }
+      await getUser();
     };
     fetchUserDetails();
   }, []);
 
   useEffect(() => {
     const fetchUserCart = async () => {
-      const phone = localStorage.getItem("user");
-      if (phone) {
-        await fetchCart(phone);
-      }
+      await fetchCart();
     };
     fetchUserCart();
   }, []);
@@ -100,6 +94,7 @@ export default function CheckoutPage() {
         payment_type: "Direct Bank Transfer",
         shippingReq: formData.orderNotes, // Ensure this is a string
         total: orderTotal,
+        deliveryOption: deliveryOption,
         cart: cart.map((item) => ({ ...item })), // Ensure `cart` contains plain objects
         address_data: {
           name: formData.receiverName,
@@ -114,19 +109,33 @@ export default function CheckoutPage() {
       console.log("Order Body:", order_body);
 
       // Make the order
+      const token = localStorage.getItem("token");
+
       const orderResponse = await axios.post(
-        "https://albazaarkorea.com/api/makeOrder",
-        order_body
+        "https://api.albazaarkorea.com/web/makeOrder",
+        order_body,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       console.log("Order placed successfully:", orderResponse.data);
 
       // Send confirmation message
       const messageResponse = await axios.post(
-        "https://albazaarkorea.com/api/sendMessage",
+        "https://api.albazaarkorea.com/web/sendMessage",
         {
           phone: userDetails.phone,
           total: orderTotal,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 

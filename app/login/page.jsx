@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -16,14 +15,22 @@ import { Label } from "@/components/ui/label";
 import { Smartphone } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
+import DaumPostcode from "react-daum-postcode";
 
 export default function LoginPage() {
-  const [step, setStep] = useState("phone");
+  const [step, setStep] = useState("phone"); // steps: "phone", "otp", "address"
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+
+  // New states for address selection step
+  const [receiverName, setReceiverName] = useState("");
+  const [address, setAddress] = useState("");
+  const [detailedAddress, setDetailedAddress] = useState("");
+  const [showPostcode, setShowPostcode] = useState(false);
+
   const router = useRouter();
   const { login } = useAuth();
 
@@ -42,7 +49,7 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post(
-        "https://albazaarkorea.com/api/createUser",
+        "https://api.albazaarkorea.com/web/createUser",
         { phone }
       );
 
@@ -68,14 +75,22 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post(
-        "https://albazaarkorea.com/api/verifyUser",
+        "https://api.albazaarkorea.com/web/verifyUser",
         { phone, otp: otp.join("") }
       );
 
-      if (response.data && response.data.activated) {
-        console.log("Login successful:", response.data);
-        login(phone); // Update AuthContext with user phone
-        router.replace("/"); // Navigate to home
+      if (response.data && response.data.activated && response.data.token) {
+        console.log("OTP verified successfully:", response.data);
+        // Save the JWT token in local storage
+        localStorage.setItem("token", response.data.token);
+        // Move to the address selection step
+        // If the user already has an address (response.data.addr exists), skip address step.
+        if (response.data.addr && response.data.addr.trim() !== "") {
+          login();
+          router.replace("/");
+        } else {
+          setStep("address");
+        }
       } else {
         setError("Invalid OTP. Please try again.");
       }
@@ -111,21 +126,62 @@ export default function LoginPage() {
     }
   };
 
+  // Callback function for DaumPostcode component
+  const handleAddressSelect = (data) => {
+    console.log("Selected address data:", data);
+    // Set the main address field based on the selection (customize as needed)
+    setAddress(data.address);
+    setShowPostcode(false);
+  };
+
+  // Handle final address confirmation
+  const handleAddressSubmit = async (e) => {
+    e.preventDefault();
+    if (!receiverName || !address || !detailedAddress) {
+      setError("Please enter receiver name, address, and detailed address.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        "https://api.albazaarkorea.com/web/updateAddress",
+        { phone, receiverName, address, detailedAddress },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Address update response:", response.data);
+
+      // Optionally, update the AuthContext or store additional info here.
+      login();
+      router.replace("/");
+    } catch (error) {
+      console.error("Error updating address:", error);
+      setError("Failed to update address. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4 sm:px-6 lg:px-8 relative">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Login to Your Account
+            {step === "address"
+              ? "Confirm Your Address"
+              : "Login to Your Account"}
           </CardTitle>
           <CardDescription className="text-center">
-            {step === "phone"
-              ? "Enter your phone number to receive an OTP"
-              : "Enter the 6-digit OTP sent to your phone"}
+            {step === "phone" && "Enter your phone number to receive an OTP"}
+            {step === "otp" && "Enter the 6-digit OTP sent to your phone"}
+            {step === "address" &&
+              "Enter receiver name, select address, and add details"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {step === "phone" ? (
+          {step === "phone" && (
             <form onSubmit={handlePhoneSubmit}>
               <div className="grid gap-4">
                 <Label htmlFor="phone">Phone Number</Label>
@@ -150,7 +206,9 @@ export default function LoginPage() {
                 {loading ? "Sending OTP..." : "Send OTP"}
               </Button>
             </form>
-          ) : (
+          )}
+
+          {step === "otp" && (
             <form onSubmit={handleOtpSubmit}>
               <div className="grid gap-4">
                 <Label htmlFor="otp-0">Enter OTP</Label>
@@ -188,6 +246,46 @@ export default function LoginPage() {
               </Button>
             </form>
           )}
+
+          {step === "address" && (
+            <form onSubmit={handleAddressSubmit}>
+              <div className="grid gap-4">
+                <Label htmlFor="receiverName">Receiver Name</Label>
+                <Input
+                  id="receiverName"
+                  placeholder="Enter receiver name"
+                  value={receiverName}
+                  onChange={(e) => setReceiverName(e.target.value)}
+                  required
+                />
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="Click to select address"
+                  value={address}
+                  readOnly
+                  onClick={() => setShowPostcode(true)}
+                  required
+                />
+                <Label htmlFor="detailedAddress">Detailed Address</Label>
+                <Input
+                  id="detailedAddress"
+                  placeholder="Enter detailed address (e.g., apartment, floor)"
+                  value={detailedAddress}
+                  onChange={(e) => setDetailedAddress(e.target.value)}
+                  required
+                />
+              </div>
+              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+              <Button
+                className="text-black w-full mt-4 border bg-transparent border-green-500 hover:bg-green-500 shadow-sm hover:text-white"
+                type="submit"
+                disabled={loading}
+              >
+                Confirm
+              </Button>
+            </form>
+          )}
         </CardContent>
         <CardFooter>
           <p className="text-sm text-center text-gray-600 mt-4 w-full">
@@ -195,6 +293,26 @@ export default function LoginPage() {
           </p>
         </CardFooter>
       </Card>
+
+      {/* Modal for DaumPostcode */}
+      {showPostcode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded w-11/12 max-w-md">
+            <DaumPostcode
+              onComplete={handleAddressSelect}
+              style={{ width: "100%", height: "400px" }}
+            />
+            <div className="flex justify-end mt-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowPostcode(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

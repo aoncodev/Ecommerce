@@ -29,7 +29,13 @@ export default function SaleProductLayout() {
   const [batchIndex, setBatchIndex] = useState(0);
 
   useEffect(() => {
-    fetch("https://albazaarkorea.com/api/get/special")
+    const token = localStorage.getItem("token");
+    fetch("https://api.albazaarkorea.com/web/get/special", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         setSpecial(data.data);
