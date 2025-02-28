@@ -124,23 +124,6 @@ export default function CheckoutPage() {
 
       console.log("Order placed successfully:", orderResponse.data);
 
-      // Send confirmation message
-      const messageResponse = await axios.post(
-        "https://api.albazaarkorea.com/web/sendMessage",
-        {
-          phone: userDetails.phone,
-          total: orderTotal,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Message sent successfully:", messageResponse.data);
-
       // Save user info if the checkbox is checked
       if (formData.saveInfo) {
         await updateUser({

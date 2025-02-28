@@ -103,10 +103,15 @@ export default function LoginPage() {
   };
 
   const handleOtpChange = (index, value) => {
-    const newOtp = [...otp];
-    newOtp[index] = value;
+    // Remove any non-digit characters
+    const sanitizedValue = value.replace(/\D/g, "");
+    if (!sanitizedValue) return; // If no valid number, do nothing
 
-    if (value && index < 5) {
+    const newOtp = [...otp];
+    newOtp[index] = sanitizedValue;
+
+    // Automatically move focus to the next input if available
+    if (sanitizedValue && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       if (nextInput) nextInput.focus();
     }
@@ -189,10 +194,17 @@ export default function LoginPage() {
                   <Smartphone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <Input
                     id="phone"
-                    placeholder="Enter your phone number"
+                    placeholder="Enter your phone number Ex:01012345678"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      // Remove non-digit characters and limit to 11 digits
+                      const onlyNums = e.target.value.replace(/\D/g, "");
+                      if (onlyNums.length <= 11) {
+                        setPhone(onlyNums);
+                      }
+                    }}
                     className="pl-10"
+                    inputMode="numeric"
                     required
                   />
                 </div>
@@ -259,14 +271,22 @@ export default function LoginPage() {
                   required
                 />
                 <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  placeholder="Click to select address"
-                  value={address}
-                  readOnly
-                  onClick={() => setShowPostcode(true)}
-                  required
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="address"
+                    placeholder="Enter your address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowPostcode(true)}
+                  >
+                    Search Address
+                  </Button>
+                </div>
                 <Label htmlFor="detailedAddress">Detailed Address</Label>
                 <Input
                   id="detailedAddress"

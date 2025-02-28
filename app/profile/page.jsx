@@ -174,14 +174,22 @@ export default function EnhancedProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      value={formDetails.address}
-                      onClick={() => setShowAddressModal(true)}
-                      readOnly
-                      placeholder="Select your address"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="address"
+                        name="address"
+                        value={formDetails.address}
+                        onChange={handleInputChange}
+                        placeholder="Enter your address"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowAddressModal(true)}
+                      >
+                        Search Address
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="additionalAddress">Detailed Address</Label>
