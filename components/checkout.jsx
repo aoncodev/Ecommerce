@@ -318,7 +318,9 @@ export default function CheckoutPage() {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="normal" id="normal" />
-                        <Label htmlFor="normal">Normal Delivery (3,500₩)</Label>
+                        <Label htmlFor="normal">
+                          Standard Delivery (3,500₩)
+                        </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="island" id="island" />

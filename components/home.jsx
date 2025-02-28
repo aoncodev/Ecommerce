@@ -245,7 +245,7 @@ export default function ProductPage() {
       {/* Search Bar */}
       <div className="flex flex-col items-center mb-8 mt-12">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-          Discover Your Next Favorite Find
+          Discover Your Next Favorite
         </h2>
         <div className="relative w-full max-w-md">
           <Input
