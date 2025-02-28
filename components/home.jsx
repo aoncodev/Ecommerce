@@ -386,7 +386,7 @@ export default function ProductPage() {
               <Link
                 key={product._id}
                 href={{
-                  pathname: `/product/${product.title_en}`,
+                  pathname: `/product/${product.title_en.replace(/\//g, "-")}`,
                   query: { productId: product._id },
                 }}
               >
